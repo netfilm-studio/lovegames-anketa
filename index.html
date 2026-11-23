@@ -149,10 +149,10 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:24px}
 
 <section>
   <h2><b>04</b>Главы и места</h2>
-  <p class="hint">Каждое важное место становится главой игры: кафе, парк, университет, машина, дом родителей. В стандартную игру входят 3 главы, каждая дополнительная за доплату.</p>
+  <p class="hint">Каждое важное место становится главой игры: кафе, парк, университет, машина, дом родителей. В стандартную игру входят 3 главы, каждая дополнительная за доплату. К каждой главе прикрепите от 1 до 5 фото.</p>
   <label for="chap">Сколько глав хотите<select id="chap" name="Главы"><option>3 главы (стандарт)</option><option>4 главы (+1 за доплату)</option><option>5 глав (+2 за доплату)</option><option>Больше 5 (обсудим)</option></select></label>
   <div class="rep" id="places"></div>
-  <button type="button" class="add" data-add="places">+ Добавить место</button>
+  <button type="button" class="add" data-add="places">+ Добавить главу</button>
 </section>
 
 <section>
@@ -205,7 +205,6 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:24px}
   <p class="hint">Необязательно, но с ними игра получится живее.</p>
   <div class="up" data-key="together" data-max="1" data-sub="Совместное фото"><div class="lbl">Одно любимое совместное фото<span>Покажем его в финале игры</span></div><div class="thumbs"></div></div>
   <div class="up" data-key="moments" data-max="15" data-sub="Моменты"><div class="lbl">Фото ваших моментов, до 15<span>Из них сделаем полароиды-воспоминания</span></div><div class="thumbs"></div></div>
-  <div class="up" data-key="places" data-max="6" data-sub="Места"><div class="lbl">Фото важных мест, до 6</div><div class="thumbs"></div></div>
 </section>
 </form>
 
@@ -296,8 +295,18 @@ function addCard(kind,vals){
   TPL[kind].forEach(([lab,type,ph],i)=>{const id=kind+'_'+(uid++);const L=document.createElement('label');L.htmlFor=id;L.textContent=lab;
     const el=type==='area'?document.createElement('textarea'):document.createElement('input');if(type!=='area')el.type='text';
     el.id=id;el.placeholder=ph;if(type==='area')el.style.minHeight='64px';if(vals&&vals[i])el.value=vals[i];L.appendChild(el);c.appendChild(L);});
+  if(kind==='places'){
+    const cn=chapN++;c.dataset.ch=cn;
+    const t=document.createElement('div');t.className='top';t.innerHTML='<span class="ttl"></span>';c.prepend(t);
+    const u=document.createElement('div');u.className='up';u.dataset.key='ch'+cn;u.dataset.max='5';
+    u.innerHTML='<div class="lbl">Фото к этой главе, от 1 до 5<span>Само место, вы там, важные детали</span></div><div class="thumbs"></div><div class="cnt"></div>';
+    c.appendChild(u);box.appendChild(c);initUp(u);chapNum();return;
+  }
   box.appendChild(c);
 }
+let chapN=0;
+function chapNum(){[...document.querySelectorAll('#places .card')].forEach((c,i)=>{const t=c.querySelector('.ttl');if(t)t.textContent='Глава '+(i+1)+(i>=3?' (доплата)':'');});}
+function chapters(){return [...document.querySelectorAll('#places .card')].map((c,i)=>({i,key:'ch'+c.dataset.ch,name:(c.querySelector('input:not([type=file])').value||'').trim()}));}
 
 /* ---------- черновик ---------- */
 const KEY='lovegames_anketa_v2';
@@ -305,7 +314,7 @@ function collect(){
   const d={f:{},chips:{},rep:{},heroes:heroes().map(h=>[h.name,h.role])};
   document.querySelectorAll('#f [name]').forEach(e=>d.f[e.id]=e.value);
   document.querySelectorAll('.chips').forEach(ch=>d.chips[ch.dataset.name]=[...ch.querySelectorAll('input:checked')].map(i=>i.value));
-  Object.keys(TPL).forEach(k=>d.rep[k]=[...document.querySelectorAll('#'+k+' .card')].map(c=>[...c.querySelectorAll('input,textarea')].map(e=>e.value)));
+  Object.keys(TPL).forEach(k=>d.rep[k]=[...document.querySelectorAll('#'+k+' .card')].map(c=>[...c.querySelectorAll('input:not([type=file]),textarea')].map(e=>e.value)));
   return d;
 }
 function load(){
@@ -329,14 +338,14 @@ function text(){
   const chip=n=>[...document.querySelectorAll('.chips[data-name="'+n+'"] input:checked')].map(i=>i.value).join(', ');
   put('Повод',chip('Повод'));put('Нужна к',v('date'));put('Сюрприз',v('surp'));put('Главы',v('chap'));if(heroes().length>2)put('Доп. герои (доплата)',String(heroes().length-2));
   put('Знакомство',v('meet'));put('Первое впечатление',v('first'));put('Первое свидание',v('date1'));put('Важные моменты',v('key'));put('Трудности',v('hard'));
-  const rep=(k,title,fmt)=>{const rows=[...document.querySelectorAll('#'+k+' .card')].map(c=>[...c.querySelectorAll('input,textarea')].map(e=>e.value.trim())).filter(r=>r.some(Boolean));
+  const rep=(k,title,fmt)=>{const rows=[...document.querySelectorAll('#'+k+' .card')].map(c=>[...c.querySelectorAll('input:not([type=file]),textarea')].map(e=>e.value.trim())).filter(r=>r.some(Boolean));
     if(rows.length){L.push('',title+':');rows.forEach((r,i)=>L.push((i+1)+'. '+fmt(r)));}};
-  rep('places','Места',r=>r[0]+(r[1]?' — '+r[1]:''));
+  {const ch=chapters();const rows=[...document.querySelectorAll('#places .card')].map(c=>[...c.querySelectorAll('input:not([type=file]),textarea')].map(e=>e.value.trim()));if(rows.some((r,i)=>r.some(Boolean)||(PHOTOS[ch[i].key]||[]).length)){L.push('','Главы (места):');rows.forEach((r,i)=>{const k=(PHOTOS[ch[i].key]||[]).length;if(r.some(Boolean)||k)L.push('Глава '+(i+1)+'. '+(r[0]||'—')+(r[1]?' — '+r[1]:'')+' · фото: '+k);});}}
   rep('people','Люди рядом',r=>r[0]+(r[1]?' — '+r[1]:''));
   put('Прозвища',v('nick'));put('Шутки и фразы',v('jokes'));put('Еда',v('food'));put('Песня',v('song'));put('Фильмы',v('film'));put('Хобби',v('hobby'));put('Привычки',v('habits'));
   rep('quiz','Квиз',r=>(r[0]||'?')+' → '+(r[1]||'?'));
   put('Финал',v('final'));put('Настроение',chip('Настроение'));put('Нельзя',v('no'));put('Пожелания',v('wish'));
-  L.push('','Доп. фото: совместное '+(PHOTOS.together||[]).length+', моменты '+(PHOTOS.moments||[]).length+', места '+(PHOTOS.places||[]).length);
+  L.push('','Доп. фото: совместное '+(PHOTOS.together||[]).length+', моменты '+(PHOTOS.moments||[]).length+'');
   return {text:L.join('\n'),names,chip};
 }
 function progress(){
@@ -378,6 +387,7 @@ $('#go').addEventListener('click',async()=>{
   const T=text();const hs=heroes();
   const jobs=[];
   hs.forEach((h,i)=>(PHOTOS['hero'+h.n]||[]).forEach((p,j)=>jobs.push(['Герой '+(i+1)+' — '+h.name,(j+1)+'_'+p.name,p.data])));
+  chapters().forEach(c=>(PHOTOS[c.key]||[]).forEach((p,j)=>jobs.push(['Глава '+(c.i+1)+(c.name?' — '+c.name:''),(j+1)+'_'+p.name,p.data])));
   document.querySelectorAll('section .up[data-sub]').forEach(b=>(PHOTOS[b.dataset.key]||[]).forEach((p,j)=>jobs.push([b.dataset.sub,(j+1)+'_'+p.name,p.data])));
   try{
     msg('Отправляем анкету…');
