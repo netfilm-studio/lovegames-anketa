@@ -55,6 +55,7 @@ legend{font-weight:600;font-size:15px;margin-bottom:8px;padding:0}
 .card.hero{border-style:solid;background:#181226}
 .card .top{display:flex;justify-content:space-between;align-items:center;font:700 15px var(--display);color:var(--violet)}
 .rm{background:none;border:0;color:var(--muted);font:500 13px var(--body);cursor:pointer;text-decoration:underline}
+.note{margin:0;font-size:14px;color:var(--crimson)}
 .add{justify-self:start;background:none;color:var(--violet);border:1px solid var(--violet);border-radius:4px;padding:8px 12px;font:600 14px var(--body);cursor:pointer}
 .rules{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:520px){.rules{grid-template-columns:1fr}}
@@ -126,13 +127,14 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:24px}
 
 <section>
   <h2><b>02</b>Герои игры</h2>
-  <p class="hint">Обычно это вы вдвоём, но героев может быть больше: дети, друзья. Для каждого прикрепите 2–3 фото в полный рост, по ним мы рисуем пиксельного персонажа.</p>
+  <p class="hint">В стандартную игру входят 2 героя. Если нужно больше (дети, друзья, питомец), добавьте их, каждый дополнительный герой за доплату. Для каждого прикрепите 2–3 фото в полный рост, по ним мы рисуем пиксельного персонажа.</p>
   <div class="rules">
     <div class="rule yes"><b>ТАК ХОРОШО</b>Человек виден целиком, от макушки до обуви. Лицом к камере, светло, обычная любимая одежда.</div>
     <div class="rule no"><b>ТАК НЕ ПОДОЙДЁТ</b>Обрезаны ноги или голова, сидя, в группе, тёмные или размытые, с сильными фильтрами.</div>
   </div>
   <div class="rep" id="heroes"></div>
-  <button type="button" class="add" id="addHero">+ Добавить героя</button>
+  <button type="button" class="add" id="addHero">+ Добавить героя (доплата)</button>
+  <p class="note" id="heroNote" hidden></p>
 </section>
 
 <section>
@@ -146,8 +148,9 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:24px}
 </section>
 
 <section>
-  <h2><b>04</b>Места</h2>
-  <p class="hint">Из них сделаем локации: кафе, парк, университет, машина, дом родителей. Если мест больше двух, добавьте их кнопкой.</p>
+  <h2><b>04</b>Главы и места</h2>
+  <p class="hint">Каждое важное место становится главой игры: кафе, парк, университет, машина, дом родителей. В стандартную игру входят 3 главы, каждая дополнительная за доплату.</p>
+  <label for="chap">Сколько глав хотите<select id="chap" name="Главы"><option>3 главы (стандарт)</option><option>4 главы (+1 за доплату)</option><option>5 глав (+2 за доплату)</option><option>Больше 5 (обсудим)</option></select></label>
   <div class="rep" id="places"></div>
   <button type="button" class="add" data-add="places">+ Добавить место</button>
 </section>
@@ -284,7 +287,7 @@ function addHero(v){
   c.querySelector('.rm').onclick=()=>{c.remove();delete PHOTOS['hero'+n];renum();upd();};
   box.appendChild(c);initUp(c.querySelector('.up'));renum();
 }
-function renum(){const hs=[...document.querySelectorAll('.card.hero')];hs.forEach((h,i)=>{h.querySelector('.ttl').textContent='Герой '+(i+1);h.querySelector('.rm').style.display=hs.length>2?'':'none';});}
+function renum(){const hs=[...document.querySelectorAll('.card.hero')];const hn=document.getElementById('heroNote');if(hn){const x=hs.length-2;hn.hidden=x<1;hn.textContent='Дополнительных героев: '+x+'. Стоимость доплаты уточним в WhatsApp.';}hs.forEach((h,i)=>{h.querySelector('.ttl').textContent='Герой '+(i+1);h.querySelector('.rm').style.display=hs.length>2?'':'none';});}
 function heroes(){return [...document.querySelectorAll('.card.hero')].map(h=>({n:h.dataset.hero,name:h.querySelector('.h-name').value.trim(),role:h.querySelector('.h-role').value.trim(),el:h}));}
 
 /* ---------- повторяемые блоки ---------- */
@@ -324,7 +327,7 @@ function text(){
   const put=(t,s)=>{s=(s||'').trim();if(s)L.push('',t+':',s);};
   put('Город',v('city'));put('Язык',v('lang'));
   const chip=n=>[...document.querySelectorAll('.chips[data-name="'+n+'"] input:checked')].map(i=>i.value).join(', ');
-  put('Повод',chip('Повод'));put('Нужна к',v('date'));put('Сюрприз',v('surp'));
+  put('Повод',chip('Повод'));put('Нужна к',v('date'));put('Сюрприз',v('surp'));put('Главы',v('chap'));if(heroes().length>2)put('Доп. герои (доплата)',String(heroes().length-2));
   put('Знакомство',v('meet'));put('Первое впечатление',v('first'));put('Первое свидание',v('date1'));put('Важные моменты',v('key'));put('Трудности',v('hard'));
   const rep=(k,title,fmt)=>{const rows=[...document.querySelectorAll('#'+k+' .card')].map(c=>[...c.querySelectorAll('input,textarea')].map(e=>e.value.trim())).filter(r=>r.some(Boolean));
     if(rows.length){L.push('',title+':');rows.forEach((r,i)=>L.push((i+1)+'. '+fmt(r)));}};
